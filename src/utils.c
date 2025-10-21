@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include <forge/cstr.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -146,12 +148,21 @@ rm_dir(const char *fp)
         char **files = ls(fp, &files_n);
 
         for (size_t i = 0; i < files_n; ++i) {
-                if (is_dir(files[i])) {
-                        rm_dir(files[i]);
+                if (!strcmp(files[i], "..")) continue;
+                if (!strcmp(files[i], "."))  continue;
+                char *path = forge_cstr_builder(fp, "/", files[i], NULL);
+                if (is_dir(path)) {
+                        rm_dir(path);
                 } else {
-                        rm_file(files[i]);
+                        rm_file(path);
                 }
+                free(path);
                 free(files[i]);
+        }
+
+        if (remove(fp) != 0) {
+                perror("remove");
+                exit(1);
         }
 }
 
